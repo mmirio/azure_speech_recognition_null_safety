@@ -392,7 +392,7 @@ class AzureSpeechRecognitionPlugin : FlutterPlugin, Activity(), MethodCallHandle
                     enableMiscue
                 )
             pronunciationAssessmentConfig.setPhonemeAlphabet(phonemeAlphabet)
-            pronunciationAssessmentConfig.enableProsodyAssessment = true;
+            pronunciationAssessmentConfig.enableProsodyAssessment();
 
 
             if (nBestPhonemeCount != null) {
