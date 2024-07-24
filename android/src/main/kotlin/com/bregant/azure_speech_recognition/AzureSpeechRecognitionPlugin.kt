@@ -165,7 +165,7 @@ class AzureSpeechRecognitionPlugin : FlutterPlugin, Activity(), MethodCallHandle
             invokeMethod("speech.Synthesizing", mapOf(
                 "textId" to textId,
                 "text" to speechSynthesisWordBoundaryEventArgs.text,
-                "boundaryType" to speechSynthesisWordBoundaryEventArgs.boundaryType,
+                "boundaryType" to speechSynthesisWordBoundaryEventArgs.boundaryType.toString(),
                 "textOffset" to speechSynthesisWordBoundaryEventArgs.textOffset,
                 "duration" to speechSynthesisWordBoundaryEventArgs.duration
             ))
