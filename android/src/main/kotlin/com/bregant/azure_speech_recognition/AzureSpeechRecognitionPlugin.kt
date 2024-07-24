@@ -153,31 +153,38 @@ class AzureSpeechRecognitionPlugin : FlutterPlugin, Activity(), MethodCallHandle
         speechConfig.requestWordLevelTimestamps()
 
         val speechSynthesizer = SpeechSynthesizer(speechConfig)
-        val speechSynthesisResult = speechSynthesizer.SpeakText(text)
-
         speechSynthesizer.WordBoundary.addEventListener { any, speechSynthesisWordBoundaryEventArgs ->
-
-            println("Speech synthesized WordBoundary  text: " + speechSynthesisWordBoundaryEventArgs.text+
+            println("SpeechSynthesizer WordBoundary  text: " + speechSynthesisWordBoundaryEventArgs.text+
                     "\t\t\t boundaryType: " + speechSynthesisWordBoundaryEventArgs.boundaryType+
                     "\t\t\t audioOffset: " + speechSynthesisWordBoundaryEventArgs.audioOffset+
                     "\t\t\t textOffset: " + speechSynthesisWordBoundaryEventArgs.textOffset+
                     "\t\t\t duration: " + speechSynthesisWordBoundaryEventArgs.duration+
                     "\t\t\t wordLength: " + speechSynthesisWordBoundaryEventArgs.wordLength)
-
         }
 
-        if (speechSynthesisResult.reason == ResultReason.SynthesizingAudioCompleted) {
-            println("Speech synthesized to speaker for text [" + text + "]")
+        speechSynthesizer.Synthesizing.addEventListener { any, speechSynthesisEventArgs ->
 
-        } else if (speechSynthesisResult.reason == ResultReason.Canceled) {
-            val cancellation = SpeechSynthesisCancellationDetails.fromResult(speechSynthesisResult)
-            println("CANCELED: Reason=" + cancellation.reason)
-            if (cancellation.reason == CancellationReason.Error) {
-                println("CANCELED: ErrorCode=" + cancellation.errorCode)
-                println("CANCELED: ErrorDetails=" + cancellation.errorDetails)
-                println("CANCELED: Did you set the speech resource key and region values?")
+            val speechSynthesisResult = speechSynthesisEventArgs.result
+
+            if (speechSynthesisResult.reason == ResultReason.SynthesizingAudioCompleted) {
+                println("SpeechSynthesizer to speaker for text [" + text + "]")
+
+            } else if (speechSynthesisResult.reason == ResultReason.Canceled) {
+                val cancellation = SpeechSynthesisCancellationDetails.fromResult(speechSynthesisResult)
+                println("SpeechSynthesizer CANCELED: Reason=" + cancellation.reason)
+                if (cancellation.reason == CancellationReason.Error) {
+                    println("SpeechSynthesizer CANCELED: ErrorCode=" + cancellation.errorCode)
+                    println("SpeechSynthesizer CANCELED: ErrorDetails=" + cancellation.errorDetails)
+                    println("SpeechSynthesizer CANCELED: Did you set the speech resource key and region values?")
+                }
             }
+
         }
+
+        speechSynthesizer.SpeakTextAsync(text)
+
+
+
 
 
     }
