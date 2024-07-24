@@ -150,17 +150,18 @@ class AzureSpeechRecognitionPlugin : FlutterPlugin, Activity(), MethodCallHandle
     fun textToSpeak(speechSubscriptionKey: String, serviceRegion: String, text: String,textId:String?) {
         val speechConfig = SpeechConfig.fromSubscription(speechSubscriptionKey, serviceRegion)
 
-        speechConfig.speechSynthesisVoiceName = "en-US-AvaMultilingualNeural"
+        speechConfig.speechSynthesisVoiceName = "en-US-EmmaMultilingualNeural"
         speechConfig.requestWordLevelTimestamps()
+        speechConfig.setSpeechSynthesisOutputFormat(SpeechSynthesisOutputFormat.Raw44100Hz16BitMonoPcm	)
 
         val speechSynthesizer = SpeechSynthesizer(speechConfig)
         speechSynthesizer.WordBoundary.addEventListener { any, speechSynthesisWordBoundaryEventArgs ->
-            println("SpeechSynthesizer WordBoundary  text: " + speechSynthesisWordBoundaryEventArgs.text+
+          /*  println("SpeechSynthesizer WordBoundary  text: " + speechSynthesisWordBoundaryEventArgs.text+
                     "\t\t\t boundaryType: " + speechSynthesisWordBoundaryEventArgs.boundaryType+
                     "\t\t\t audioOffset: " + speechSynthesisWordBoundaryEventArgs.audioOffset+
                     "\t\t\t textOffset: " + speechSynthesisWordBoundaryEventArgs.textOffset+
                     "\t\t\t duration: " + speechSynthesisWordBoundaryEventArgs.duration+
-                    "\t\t\t wordLength: " + speechSynthesisWordBoundaryEventArgs.wordLength)
+                    "\t\t\t wordLength: " + speechSynthesisWordBoundaryEventArgs.wordLength)*/
 
             invokeMethod("speech.Synthesizing", mapOf(
                 "textId" to textId,
