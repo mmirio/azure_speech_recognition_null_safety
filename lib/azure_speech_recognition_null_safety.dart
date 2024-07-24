@@ -190,4 +190,8 @@ class AzureSpeechRecognition {
   static Future<void> stopContinuousRecognition() async {
     await _channel.invokeMethod('stopContinuousStream');
   }
+
+  static Future<void> textToSpeak({required String text}) async {
+    await _channel.invokeMethod('textToSpeak',{'text':text});
+  }
 }
