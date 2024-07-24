@@ -192,6 +192,6 @@ class AzureSpeechRecognition {
   }
 
   static Future<void> textToSpeak({required String text}) async {
-    await _channel.invokeMethod('textToSpeak',{'text':text});
+    await _channel.invokeMethod('textToSpeak',{'text':text,'subscriptionKey': _subKey, 'region': _region});
   }
 }
