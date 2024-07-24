@@ -3,13 +3,14 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 
 typedef void StringResultHandler(String text);
+typedef void SynthesizingHandler(dynamic);
+
 
 class AzureSpeechRecognition {
-  static const MethodChannel _channel =
-  const MethodChannel('azure_speech_recognition');
+  static const MethodChannel _channel = const MethodChannel('azure_speech_recognition');
 
   static final AzureSpeechRecognition _azureSpeechRecognition =
-  new AzureSpeechRecognition._internal();
+      new AzureSpeechRecognition._internal();
 
   factory AzureSpeechRecognition() => _azureSpeechRecognition;
 
@@ -24,8 +25,7 @@ class AzureSpeechRecognition {
 
   /// default intitializer for almost every type except for the intent recognizer.
   /// Default language -> English
-  AzureSpeechRecognition.initialize(String subKey, String region,
-      {String? lang, String? timeout}) {
+  AzureSpeechRecognition.initialize(String subKey, String region, {String? lang, String? timeout}) {
     _subKey = subKey;
     _region = region;
     if (lang != null) _lang = lang;
@@ -48,6 +48,7 @@ class AzureSpeechRecognition {
   StringResultHandler? exceptionHandler;
   StringResultHandler? recognitionResultHandler;
   StringResultHandler? finalTranscriptionHandler;
+  SynthesizingHandler? synthesizingHandler;
   StringResultHandler? assessmentResultHandler;
   VoidCallback? recognitionStartedHandler;
   VoidCallback? startRecognitionHandler;
@@ -63,6 +64,9 @@ class AzureSpeechRecognition {
         break;
       case "speech.onFinalResponse":
         finalTranscriptionHandler!(call.arguments);
+        break;
+      case "speech.Synthesizing":
+        synthesizingHandler!(call.arguments);
         break;
       case "speech.onAssessmentResult":
         assessmentResultHandler!(call.arguments);
@@ -86,47 +90,40 @@ class AzureSpeechRecognition {
       recognitionResultHandler = handler;
 
   /// final transcription is passed here
-  void setFinalTranscription(StringResultHandler handler) =>
-      finalTranscriptionHandler = handler;
+  void setFinalTranscription(StringResultHandler handler) => finalTranscriptionHandler = handler;
 
-  void setAssessmentResult(StringResultHandler handler) =>
-      assessmentResultHandler = handler;
+  void setAssessmentResult(StringResultHandler handler) => assessmentResultHandler = handler;
 
   /// called when an exception occur
-  void onExceptionHandler(StringResultHandler handler) =>
-      exceptionHandler = handler;
+  void onExceptionHandler(StringResultHandler handler) => exceptionHandler = handler;
 
   /// called when the recognition is started
-  void setRecognitionStartedHandler(VoidCallback handler) =>
-      recognitionStartedHandler = handler;
+  void setRecognitionStartedHandler(VoidCallback handler) => recognitionStartedHandler = handler;
 
   /// only for continuosly
-  void setStartHandler(VoidCallback handler) =>
-      startRecognitionHandler = handler;
+  void setStartHandler(VoidCallback handler) => startRecognitionHandler = handler;
 
   /// only for continuosly
-  void setRecognitionStoppedHandler(VoidCallback handler) =>
-      recognitionStoppedHandler = handler;
+  void setRecognitionStoppedHandler(VoidCallback handler) => recognitionStoppedHandler = handler;
 
   // Performs speech recognition until a silence is detected
   static void simpleVoiceRecognition() {
     if ((_subKey != null && _region != null)) {
-      _channel.invokeMethod('simpleVoice', {
-        'language': _lang,
-        'subscriptionKey': _subKey,
-        'region': _region,
-        'timeout': _timeout
-      });
+      _channel.invokeMethod('simpleVoice',
+          {'language': _lang, 'subscriptionKey': _subKey, 'region': _region, 'timeout': _timeout});
     } else {
       throw "Error: SpeechRecognitionParameters not initialized correctly";
     }
   }
 
   /// Performs speech recognition until a silence is detected (with speech assessment)
-  static void simpleVoiceRecognitionWithAssessment({String? referenceText,
+  static void simpleVoiceRecognitionWithAssessment({
+    String? referenceText,
     String? phonemeAlphabet,
     String? granularity,
-    bool? enableMiscue, int? nBestPhonemeCount,}) {
+    bool? enableMiscue,
+    int? nBestPhonemeCount,
+  }) {
     if ((_subKey != null && _region != null)) {
       _channel.invokeMethod('simpleVoiceWithAssessment', {
         'language': _lang,
@@ -144,14 +141,13 @@ class AzureSpeechRecognition {
     }
   }
 
-
   /// When called for the first time, starts performing continuous recognition
   /// When called a second time, it stops the previously started recognition
   /// It essentially toggles between "recording" and "not recording" states
   static void continuousRecording() {
     if (_subKey != null && _region != null) {
-      _channel.invokeMethod('continuousStream',
-          {'language': _lang, 'subscriptionKey': _subKey, 'region': _region});
+      _channel.invokeMethod(
+          'continuousStream', {'language': _lang, 'subscriptionKey': _subKey, 'region': _region});
     } else {
       throw "Error: SpeechRecognitionParameters not initialized correctly";
     }
@@ -160,10 +156,13 @@ class AzureSpeechRecognition {
   /// When called for the first time, starts performing continuous recognition (with speech assessment)
   /// When called a second time, it stops the previously started recognition (with speech assessment)
   /// It essentially toggles between "recording" and "not recording" states
-  static void continuousRecordingWithAssessment({String? referenceText,
+  static void continuousRecordingWithAssessment({
+    String? referenceText,
     String? phonemeAlphabet,
     String? granularity,
-    bool? enableMiscue, int? nBestPhonemeCount,}) {
+    bool? enableMiscue,
+    int? nBestPhonemeCount,
+  }) {
     if ((_subKey != null && _region != null)) {
       _channel.invokeMethod('continuousStreamWithAssessment', {
         'language': _lang,
@@ -180,18 +179,19 @@ class AzureSpeechRecognition {
     }
   }
 
-
   /// When continuously recording, returns true, otherwise it returns false
   static Future<bool> isContinuousRecognitionOn() {
-    return _channel.invokeMethod<bool>('isContinuousRecognitionOn').then<bool>((
-        bool? value) => value ?? false);
+    return _channel
+        .invokeMethod<bool>('isContinuousRecognitionOn')
+        .then<bool>((bool? value) => value ?? false);
   }
 
   static Future<void> stopContinuousRecognition() async {
     await _channel.invokeMethod('stopContinuousStream');
   }
 
-  static Future<void> textToSpeak({required String text}) async {
-    await _channel.invokeMethod('textToSpeak',{'text':text,'subscriptionKey': _subKey, 'region': _region});
+  static Future<void> textToSpeak({required String text, String? id}) async {
+    await _channel
+        .invokeMethod('textToSpeak', {'text': text, 'subscriptionKey': _subKey, 'region': _region,'textId':id});
   }
 }

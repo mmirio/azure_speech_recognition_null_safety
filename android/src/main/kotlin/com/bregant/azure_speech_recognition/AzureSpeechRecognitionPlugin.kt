@@ -65,6 +65,7 @@ class AzureSpeechRecognitionPlugin : FlutterPlugin, Activity(), MethodCallHandle
         val serviceRegion: String = call.argument("region") ?: ""
         val lang: String = call.argument("language") ?: ""
         val timeoutMs: String = call.argument("timeout") ?: ""
+        val textId: String? = call.argument("textId")
         val referenceText: String = call.argument("referenceText") ?: ""
         val phonemeAlphabet: String = call.argument("phonemeAlphabet") ?: "IPA"
         val granularityString: String = call.argument("granularity") ?: "phoneme"
@@ -91,7 +92,7 @@ class AzureSpeechRecognitionPlugin : FlutterPlugin, Activity(), MethodCallHandle
                 result.success(true)
             }
             "textToSpeak" -> {
-                textToSpeak(speechSubscriptionKey, serviceRegion, text   )
+                textToSpeak(speechSubscriptionKey, serviceRegion, text ,textId  )
                 result.success(true)
             }
 
@@ -146,7 +147,7 @@ class AzureSpeechRecognitionPlugin : FlutterPlugin, Activity(), MethodCallHandle
     override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
         azureChannel.setMethodCallHandler(null)
     }
-    fun textToSpeak(speechSubscriptionKey: String, serviceRegion: String, text: String) {
+    fun textToSpeak(speechSubscriptionKey: String, serviceRegion: String, text: String,textId:String?) {
         val speechConfig = SpeechConfig.fromSubscription(speechSubscriptionKey, serviceRegion)
 
         speechConfig.speechSynthesisVoiceName = "en-US-AvaMultilingualNeural"
@@ -160,6 +161,15 @@ class AzureSpeechRecognitionPlugin : FlutterPlugin, Activity(), MethodCallHandle
                     "\t\t\t textOffset: " + speechSynthesisWordBoundaryEventArgs.textOffset+
                     "\t\t\t duration: " + speechSynthesisWordBoundaryEventArgs.duration+
                     "\t\t\t wordLength: " + speechSynthesisWordBoundaryEventArgs.wordLength)
+
+            invokeMethod("speech.Synthesizing", {
+                'textId':textId,
+                'text': speechSynthesisWordBoundaryEventArgs.text,
+                'boundaryType': speechSynthesisWordBoundaryEventArgs.boundaryType,
+                'textOffset': speechSynthesisWordBoundaryEventArgs.textOffset,
+                'duration': speechSynthesisWordBoundaryEventArgs.duration
+
+            })
         }
 
         speechSynthesizer.Synthesizing.addEventListener { any, speechSynthesisEventArgs ->
