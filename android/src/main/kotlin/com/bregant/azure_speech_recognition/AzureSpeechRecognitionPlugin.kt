@@ -70,6 +70,7 @@ class AzureSpeechRecognitionPlugin : FlutterPlugin, Activity(), MethodCallHandle
         val granularityString: String = call.argument("granularity") ?: "phoneme"
         val enableMiscue: Boolean = call.argument("enableMiscue") ?: false
         val nBestPhonemeCount: Int? = call.argument("nBestPhonemeCount") ?: null
+        val text: String = call.argument("text") ?: ""
         val granularity: PronunciationAssessmentGranularity
         when (granularityString) {
             "text" -> {
@@ -87,6 +88,10 @@ class AzureSpeechRecognitionPlugin : FlutterPlugin, Activity(), MethodCallHandle
         when (call.method) {
             "simpleVoice" -> {
                 simpleSpeechRecognition(speechSubscriptionKey, serviceRegion, lang, timeoutMs)
+                result.success(true)
+            }
+            "textToSpeak" -> {
+                textToSpeak(speechSubscriptionKey, serviceRegion, text   )
                 result.success(true)
             }
 
@@ -141,6 +146,43 @@ class AzureSpeechRecognitionPlugin : FlutterPlugin, Activity(), MethodCallHandle
     override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
         azureChannel.setMethodCallHandler(null)
     }
+    fun textToSpeak(speechSubscriptionKey: String, serviceRegion: String, text: String) {
+        val speechConfig = SpeechConfig.fromSubscription(speechSubscriptionKey, serviceRegion)
+
+        speechConfig.speechSynthesisVoiceName = "en-US-AvaMultilingualNeural"
+        speechConfig.requestWordLevelTimestamps()
+
+        val speechSynthesizer = SpeechSynthesizer(speechConfig)
+        val speechSynthesisResult = speechSynthesizer.SpeakText(text)
+
+        speechSynthesizer.WordBoundary.addEventListener { any, speechSynthesisWordBoundaryEventArgs ->
+
+            println("Speech synthesized WordBoundary  text: " + speechSynthesisWordBoundaryEventArgs.text+
+                    "\t\t\t boundaryType: " + speechSynthesisWordBoundaryEventArgs.boundaryType+
+                    "\t\t\t audioOffset: " + speechSynthesisWordBoundaryEventArgs.audioOffset+
+                    "\t\t\t textOffset: " + speechSynthesisWordBoundaryEventArgs.textOffset+
+                    "\t\t\t duration: " + speechSynthesisWordBoundaryEventArgs.duration+
+                    "\t\t\t wordLength: " + speechSynthesisWordBoundaryEventArgs.wordLength)
+
+        }
+
+        if (speechSynthesisResult.reason == ResultReason.SynthesizingAudioCompleted) {
+            println("Speech synthesized to speaker for text [" + text + "]")
+
+        } else if (speechSynthesisResult.reason == ResultReason.Canceled) {
+            val cancellation = SpeechSynthesisCancellationDetails.fromResult(speechSynthesisResult)
+            println("CANCELED: Reason=" + cancellation.reason)
+            if (cancellation.reason == CancellationReason.Error) {
+                println("CANCELED: ErrorCode=" + cancellation.errorCode)
+                println("CANCELED: ErrorDetails=" + cancellation.errorDetails)
+                println("CANCELED: Did you set the speech resource key and region values?")
+            }
+        }
+
+
+    }
+
+
 
     private fun simpleSpeechRecognition(
         speechSubscriptionKey: String, serviceRegion: String, lang: String, timeoutMs: String
